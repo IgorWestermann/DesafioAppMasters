@@ -17,7 +17,11 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import api from "./services/api";
-import QrReader from 'react-qr-reader'
+import QrReader from "react-qr-reader";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 export const Styles = styled.div`
   .MuiContainer-root {
@@ -101,63 +105,65 @@ export const Styles = styled.div`
   }
 `;
 
-
 export default class Product extends Component {
   id = 0;
 
   date = moment().format("DD[/]MM [às] h:mm");
 
   async enviar(obj, id) {
-    let idi = '5f7f73feba32bc3510031ac3';
-    await api.put(`/books/${idi}`, obj);
+    await api.put(`/books/${id}`, obj);
   }
 
   state = {
     clicked: false,
-    valid:false,
-    usuario:{}
-  }
+    valid: false,
+    usuario: {},
+  };
 
-  handleScan = data => {
-    console.log(data);
+  handleScan = (data) => {
+    //console.log(data);
     if (data === "https://appmasters.io") {
-      this.valid()
+      this.valid();
     }
-  }
+  };
   handleSubmit = (event) => {
     event.preventDefault();
-    this.setState(
-      {clicked:true}
-    )
+    this.setState({ clicked: true });
     const nome = event.target.elements.nome.value;
     const email = event.target.elements.email.value;
     const usuario = {
+      status: true,
       emprestimo: {
-        user:{
-        name: nome,
-        email: email,
-        date: new Date(),
-      }}
-    };  
-    
-    this.setState({
-      usuario:usuario
-    })
+        user: {
+          name: nome,
+          email: email,
+          date: new Date(),
+        },
+      },
+    };
 
-    
+    this.setState({
+      usuario: usuario,
+    });
   };
 
-  valid(){
-    this.enviar(this.state.usuario, this.id)
+  valid() {
+    this.enviar(this.state.usuario, this.props.match.params.id);
   }
-
 
   handleLogout = () => {
     localStorage.removeItem(`@bookStatus/Book ID: ${this.id}`);
     window.location.reload();
   };
+  handleToggle = () => {
+    this.setState({
+      clicked: !this.state.clicked,
+    });
+  };
 
   render() {
+    const { clicked } = this.state;
+
     moment.locale("pt-BR");
     function myFunction() {
       var x = document.getElementById("myDIV");
@@ -168,31 +174,26 @@ export default class Product extends Component {
       }
     }
 
-    
     const { details } = this.props.location.state;
     this.id = details.id;
     var user = JSON.parse(
       localStorage.getItem(`@bookStatus/Book ID: ${details.id}`)
     );
-    
 
-    
-    if(this.state.clicked){
-      console.log("ALOU",this.id);
-      return(
-        <div>
-        <QrReader
-        delay={300}
-        onError={this.handleError}
-        onScan={this.handleScan}
-        style={{ width: '30%' }}
-      />
-      <Button>Voltar</Button>
-      </div>
-      )
-    }
-
-    
+    // if (this.state.clicked) {
+    //   console.log("ALOU", this.id);
+    //   return (
+    //     <div>
+    //       <QrReader
+    //         delay={300}
+    //         onError={this.handleError}
+    //         onScan={this.handleScan}
+    //         style={{ width: "30%" }}
+    //       />
+    //       <Button>Voltar</Button>
+    //     </div>
+    //   );
+    // }
 
     if (user !== null) {
       return (
@@ -318,13 +319,35 @@ export default class Product extends Component {
                 name="email"
                 required
               />
-              <Button className="btn-form" type="submit" variant="outlined">
+              <Button
+                className="btn-form"
+                onClick={this.handleToggle}
+                variant="outlined"
+              >
                 Pegar
               </Button>
+              <Dialog open={clicked} onClose={this.handleToggle}>
+                <DialogTitle id="alert-dialog-title">
+                  Escanear Código QR
+                </DialogTitle>
+                <DialogContent>
+                  <QrReader
+                    delay={300}
+                    onError={this.handleError}
+                    onScan={this.handleScan}
+                    style={{ width: "100%", marginBottom: "10px" }}
+                  />
+                  <Button
+                    className="btn-form"
+                    onClick={this.handleToggle}
+                    variant="outlined"
+                  >
+                    Voltar
+                  </Button>
+                </DialogContent>
+              </Dialog>
             </form>
-            <Button>
-
-            </Button>
+            <Button></Button>
           </Card>
         </Container>
       </Styles>
